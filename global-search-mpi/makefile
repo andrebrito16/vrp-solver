@@ -1,8 +1,8 @@
 all:
-	g++ -std=c++17 main.cpp -o global_search_omp -fopenmp
+	mpic++ -std=c++17 main.cpp -o global_search_omp
 
 mac:
-	g++-14 -std=c++17 main.cpp -o global_search_omp -fopenmp
+	mpicxx -fopenmp -o global_search_mpi main.cpp
 
 mac-run:
 	g++-14 -fopenmp -std=c++17 main.cpp -o global_search_omp 

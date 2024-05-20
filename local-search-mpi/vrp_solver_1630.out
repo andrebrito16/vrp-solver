@@ -1,0 +1,222 @@
+Processing ../inputs/graph_3_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 472
+Process 0 cost: 472
+Process 1 cost: 472
+Process 2 cost: 472
+Process 3 cost: 472
+Process 4 cost: 472
+Process 5 cost: 472
+Process 6 cost: 472
+Process 7 cost: 472
+Process 8 cost: 472
+Process 9 cost: 472
+Process 10 cost: 472
+Process 11 cost: 472
+Process 12 cost: 472
+Process 13 cost: 472
+Process 14 cost: 472
+Process 15 cost: 472
+Process 16 cost: 472
+Process 17 cost: 472
+Process 18 cost: 472
+Process 19 cost: 472
+Process 20 cost: 472
+Process 21 cost: 472
+Process 22 cost: 472
+Process 23 cost: 472
+Process 24 cost: 472
+Process 25 cost: 472
+Process 26 cost: 472
+Process 27 cost: 472
+Process 28 cost: 472
+Process 29 cost: 472
+Process 30 cost: 472
+Process 31 cost: 472
+0 3 0 -> 0 3 0 -> 0 3 0 -> 0 3 0 
+Time taken: 16298ns
+-------------------------------------------------------------
+Processing ../inputs/graph_4_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 300
+Process 0 cost: 300
+Process 1 cost: 300
+Process 2 cost: 300
+Process 3 cost: 300
+Process 4 cost: 300
+Process 5 cost: 300
+Process 6 cost: 300
+Process 7 cost: 300
+Process 8 cost: 300
+Process 9 cost: 300
+Process 10 cost: 300
+Process 11 cost: 300
+Process 12 cost: 300
+Process 13 cost: 300
+Process 14 cost: 300
+Process 15 cost: 300
+Process 16 cost: 300
+Process 17 cost: 300
+Process 18 cost: 300
+Process 19 cost: 300
+Process 20 cost: 300
+Process 21 cost: 300
+Process 22 cost: 300
+Process 23 cost: 300
+Process 24 cost: 300
+Process 25 cost: 300
+Process 26 cost: 300
+Process 27 cost: 300
+Process 28 cost: 300
+Process 29 cost: 300
+Process 30 cost: 300
+Process 31 cost: 300
+0 4 3 0 -> 0 4 3 0 -> 0 4 3 0 -> 0 4 3 0 -> 0 4 3 0 
+Time taken: 34399ns
+-------------------------------------------------------------
+Processing ../inputs/graph_5_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 480
+Process 0 cost: 480
+Process 1 cost: 480
+Process 2 cost: 480
+Process 3 cost: 480
+Process 4 cost: 480
+Process 5 cost: 480
+Process 6 cost: 480
+Process 7 cost: 480
+Process 8 cost: 480
+Process 9 cost: 480
+Process 10 cost: 480
+Process 11 cost: 480
+Process 12 cost: 480
+Process 13 cost: 480
+Process 14 cost: 480
+Process 15 cost: 480
+Process 16 cost: 480
+Process 17 cost: 480
+Process 18 cost: 480
+Process 19 cost: 480
+Process 20 cost: 480
+Process 21 cost: 480
+Process 22 cost: 480
+Process 23 cost: 480
+Process 24 cost: 480
+Process 25 cost: 480
+Process 26 cost: 480
+Process 27 cost: 480
+Process 28 cost: 480
+Process 29 cost: 480
+Process 30 cost: 480
+Process 31 cost: 480
+0 5 4 0 -> 0 5 4 0 -> 0 5 4 0 -> 0 5 4 0 -> 0 5 4 0 -> 0 5 4 0 
+Time taken: 42967ns
+-------------------------------------------------------------
+Processing ../inputs/graph_6_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 525
+Process 0 cost: 525
+Process 1 cost: 525
+Process 2 cost: 525
+Process 3 cost: 525
+Process 4 cost: 525
+Process 5 cost: 525
+Process 6 cost: 525
+Process 7 cost: 525
+Process 8 cost: 525
+Process 9 cost: 525
+Process 10 cost: 525
+Process 11 cost: 525
+Process 12 cost: 525
+Process 13 cost: 525
+Process 14 cost: 525
+Process 15 cost: 525
+Process 16 cost: 525
+Process 17 cost: 525
+Process 18 cost: 525
+Process 19 cost: 525
+Process 20 cost: 525
+Process 21 cost: 525
+Process 22 cost: 525
+Process 23 cost: 525
+Process 24 cost: 525
+Process 25 cost: 525
+Process 26 cost: 525
+Process 27 cost: 525
+Process 28 cost: 525
+Process 29 cost: 525
+Process 30 cost: 525
+Process 31 cost: 525
+0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 
+Time taken: 48860ns
+-------------------------------------------------------------
+Processing ../inputs/graph_7_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 848
+Process 0 cost: 848
+Process 1 cost: 848
+Process 2 cost: 848
+Process 3 cost: 848
+Process 4 cost: 848
+Process 5 cost: 848
+Process 6 cost: 848
+Process 7 cost: 848
+Process 8 cost: 848
+Process 9 cost: 848
+Process 10 cost: 848
+Process 11 cost: 848
+Process 12 cost: 848
+Process 13 cost: 848
+Process 14 cost: 848
+Process 15 cost: 848
+Process 16 cost: 848
+Process 17 cost: 848
+Process 18 cost: 848
+Process 19 cost: 848
+Process 20 cost: 848
+Process 21 cost: 848
+Process 22 cost: 848
+Process 23 cost: 848
+Process 24 cost: 848
+Process 25 cost: 848
+Process 26 cost: 848
+Process 27 cost: 848
+Process 28 cost: 848
+Process 29 cost: 848
+Process 30 cost: 848
+Process 31 cost: 848
+0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 
+Time taken: 114522ns
+-------------------------------------------------------------
+Processing ../inputs/graph_8_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 783
+Process 0 cost: 783
+Process 1 cost: 783
+Process 2 cost: 783
+Process 3 cost: 783
+Process 4 cost: 783
+Process 5 cost: 783
+Process 6 cost: 783
+Process 7 cost: 783
+Process 8 cost: 783
+Process 9 cost: 783
+Process 10 cost: 783
+Process 11 cost: 783
+Process 12 cost: 783
+Process 13 cost: 783
+Process 14 cost: 783
+Process 15 cost: 783
+Process 16 cost: 783
+Process 17 cost: 783
+Process 18 cost: 783
+Process 19 cost: 783
+Process 20 cost: 783
+Process 21 cost: 783
+Process 22 cost: 783
+Process 23 cost: 783
+Process 24 cost: 783
+Process 25 cost: 783
+Process 26 cost: 783
+Process 27 cost: 783
+Process 28 cost: 783
+Process 29 cost: 783
+Process 30 cost: 783
+Process 31 cost: 783
+0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 
+Time taken: 74623ns
+-------------------------------------------------------------

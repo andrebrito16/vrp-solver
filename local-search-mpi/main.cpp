@@ -7,6 +7,9 @@
 #include <set>
 #include <map>
 #include <chrono>
+#include <mpi.h>
+#include <omp.h>
+#include <climits>
 
 using Route = std::vector<int>;
 
@@ -94,22 +97,40 @@ public:
         visitedCities.insert(0);
         int totalCost = 0;
 
-        while (visitedCities.size() < cities.size())
+        std::vector<Route> localBestRoutes;
+        int localTotalCost = 0;
+
+#pragma omp parallel
         {
-            Route route = findNextRoute(visitedCities, 0);
-            if (route.empty())
+            std::vector<Route> threadBestRoutes;
+            int threadTotalCost = 0;
+
+#pragma omp for schedule(dynamic)
+            for (int i = 0; i < cities.size() - 1; ++i)
             {
-                break;
+                std::set<int> localVisitedCities = visitedCities;
+                Route route = findNextRoute(localVisitedCities, 0);
+                if (route.empty())
+                {
+                    continue;
+                }
+                route.insert(route.begin(), 0);
+                route.push_back(0);
+                route = twoOpt(route);
+                int routeCost = calculateRouteCost(route);
+                threadTotalCost += routeCost;
+                threadBestRoutes.push_back(route);
             }
-            route.insert(route.begin(), 0);
-            route.push_back(0);
-            route = twoOpt(route);
-            int routeCost = calculateRouteCost(route);
-            totalCost += routeCost;
-            bestRoutes.push_back(route);
+
+#pragma omp critical
+            {
+                localTotalCost += threadTotalCost;
+                localBestRoutes.insert(localBestRoutes.end(), threadBestRoutes.begin(), threadBestRoutes.end());
+            }
         }
 
-        lowerCost = totalCost;
+        lowerCost = localTotalCost;
+        bestRoutes = localBestRoutes;
     }
 
     Route findNextRoute(std::set<int> &visitedCities, int startCity)
@@ -175,6 +196,8 @@ public:
         while (improvement)
         {
             improvement = false;
+
+#pragma omp parallel for schedule(dynamic)
             for (size_t i = 1; i < route.size() - 2; ++i)
             {
                 for (size_t j = i + 1; j < route.size() - 1; ++j)
@@ -183,9 +206,12 @@ public:
                     int candidateCost = calculateRouteCost(candidate);
                     if (candidateCost < bestCost)
                     {
-                        newRoute = candidate;
-                        bestCost = candidateCost;
-                        improvement = true;
+#pragma omp critical
+                        {
+                            newRoute = candidate;
+                            bestCost = candidateCost;
+                            improvement = true;
+                        }
                     }
                 }
             }
@@ -205,11 +231,21 @@ public:
 
 int main(int argc, char *argv[])
 {
+    MPI_Init(&argc, &argv);
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
     try
     {
         if (argc < 4)
         {
-            std::cerr << "Usage: " << argv[0] << " <input file> <vehicle capacity> <max cities per route>" << std::endl;
+            if (rank == 0)
+            {
+                std::cerr << "Usage: " << argv[0] << " <input file> <vehicle capacity> <max cities per route>" << std::endl;
+            }
+            MPI_Finalize();
             return 1;
         }
 
@@ -223,29 +259,49 @@ int main(int argc, char *argv[])
         solver.solve();
         auto endTime = std::chrono::high_resolution_clock::now();
 
-        std::cout << "Lower cost: " << solver.lowerCost << std::endl;
+        int globalLowerCost;
+        MPI_Reduce(&solver.lowerCost, &globalLowerCost, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
 
-        int routesLength = solver.bestRoutes.size();
-        for (const Route &route : solver.bestRoutes)
+        if (rank == 0)
         {
-            for (int city : route)
-            {
-                std::cout << city << " ";
-            }
-            if (--routesLength > 0)
-            {
-                std::cout << "-> ";
-            }
+            std::cout << "Lower cost: " << globalLowerCost << std::endl;
         }
-        std::cout << std::endl;
-        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
 
-        std::cout << "Time taken: " << duration << "ns" << std::endl;
+        std::vector<int> allLowerCosts(size);
+        MPI_Gather(&solver.lowerCost, 1, MPI_INT, allLowerCosts.data(), 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+        if (rank == 0)
+        {
+            for (int i = 0; i < size; ++i)
+            {
+                std::cout << "Process " << i << " cost: " << allLowerCosts[i] << std::endl;
+            }
+
+            int routesLength = solver.bestRoutes.size();
+            for (const Route &route : solver.bestRoutes)
+            {
+                for (int city : route)
+                {
+                    std::cout << city << " ";
+                }
+                if (--routesLength > 0)
+                {
+                    std::cout << "-> ";
+                }
+            }
+            std::cout << std::endl;
+            auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+
+            std::cout << "Time taken: " << duration << "ns" << std::endl;
+        }
     }
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
+        MPI_Finalize();
         return 1;
     }
+
+    MPI_Finalize();
     return 0;
 }

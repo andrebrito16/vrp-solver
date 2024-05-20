@@ -8,6 +8,9 @@
 #include <map>
 #include <chrono>
 #include <tuple>
+#include <omp.h>
+#include <mpi.h>
+#include <climits>
 
 using Route = std::vector<int>;
 
@@ -37,15 +40,16 @@ private:
     std::vector<City> cities;
     std::vector<Road> roads;
     std::vector<Route> routes;
+    std::vector<std::tuple<std::set<int>, int, int, int, std::vector<int>>> stack;
 
 public:
     int lowerCost = INT_MAX;
     std::vector<int> route;
     int vehicleCapacity;
-    Route bestRoute;
     int maxCitiesPerRoute;
-    int numberOfCities;
     int numberOfRoads;
+    int numberOfCities;
+    Route bestRoute;
     VRPSolver(const std::string &filename)
     {
         readInput(filename);
@@ -83,10 +87,11 @@ public:
         }
 
         file >> numRoutes;
-        numberOfRoads = numRoutes;
 #ifdef DEBUG
         std::cout << "Number of routes: " << numRoutes << std::endl;
 #endif
+        numberOfRoads = numRoutes;
+
         for (int i = 0; i < numRoutes; ++i)
         {
             int start, end, cost;
@@ -102,31 +107,59 @@ public:
         std::set<int> citiesVisited;
         citiesVisited.insert(0);
         std::vector<int> route{0};
-        generateAllPossibleRoutesLoop(citiesVisited, route);
+        stack.emplace_back(citiesVisited, 0, 0, 0, route);
+
+#pragma omp parallel
+        {
+#pragma omp single nowait
+            {
+                generateAllPossibleRoutesLoop();
+            }
+        }
 
         std::set<Route> filteredRoutes = filterValidRoutes();
 
-        for (const auto &route : filteredRoutes)
+#pragma omp parallel for
+        for (int i = 0; i < filteredRoutes.size(); ++i)
         {
-            int cost = calculateRouteCost(route);
+            auto route = std::next(filteredRoutes.begin(), i);
+            int cost = calculateRouteCost(*route);
 
-            if (cost < lowerCost)
+#pragma omp critical
             {
-                lowerCost = cost;
-                bestRoute = route;
+                if (cost < lowerCost)
+                {
+                    lowerCost = cost;
+                    bestRoute = *route;
+                }
             }
         }
     }
 
-    void generateAllPossibleRoutesLoop(std::set<int> &placesVisited, std::vector<int> &route)
+    void generateAllPossibleRoutesLoop()
     {
-        std::vector<std::tuple<std::set<int>, int, int, int, std::vector<int>>> stack;
-        stack.emplace_back(placesVisited, 0, 0, 0, route);
-
-        while (!stack.empty())
+        while (true)
         {
-            auto [placesVisited, numberOfPlacesVisited, previousCity, vehicleLoad, route] = stack.back();
-            stack.pop_back();
+            std::tuple<std::set<int>, int, int, int, std::vector<int>> current;
+#pragma omp critical
+            {
+                if (stack.empty())
+                {
+                    current = std::tuple<std::set<int>, int, int, int, std::vector<int>>();
+                }
+                else
+                {
+                    current = stack.back();
+                    stack.pop_back();
+                }
+            }
+
+            if (std::get<0>(current).empty())
+            {
+                break;
+            }
+
+            auto [placesVisited, numberOfPlacesVisited, previousCity, vehicleLoad, route] = current;
 
             for (const auto &city : cities)
             {
@@ -161,12 +194,15 @@ public:
                 {
                     if (newPlacesVisited.size() == numberOfCities)
                     {
+#pragma omp critical
                         routes.push_back(newRoute);
                     }
+#pragma omp critical
                     stack.emplace_back(newPlacesVisited, 0, currentCity, 0, newRoute);
                 }
                 else
                 {
+#pragma omp critical
                     stack.emplace_back(newPlacesVisited, numberOfPlacesVisited + 1, currentCity, vehicleLoad + city.package_weight, newRoute);
                 }
             }
@@ -177,26 +213,34 @@ public:
     {
         std::set<Route> validRoutes;
 
-        for (const Route &route : routes)
+#pragma omp parallel
         {
-            bool routeIsValid = true;
-            for (size_t i = 0; i < route.size() - 1; ++i)
+            std::set<Route> threadValidRoutes;
+#pragma omp for nowait
+            for (size_t i = 0; i < routes.size(); ++i)
             {
-                int source = route[i];
-                int destination = route[i + 1];
-                bool found = std::any_of(roads.begin(), roads.end(), [source, destination](const Road &road)
-                                         { return road.start.number == source && road.destination.number == destination; });
-
-                if (!found)
+                const Route &route = routes[i];
+                bool routeIsValid = true;
+                for (size_t j = 0; j < route.size() - 1; ++j)
                 {
-                    routeIsValid = false;
-                    break;
+                    int source = route[j];
+                    int destination = route[j + 1];
+                    bool found = std::any_of(roads.begin(), roads.end(), [source, destination](const Road &road)
+                                             { return road.start.number == source && road.destination.number == destination; });
+
+                    if (!found)
+                    {
+                        routeIsValid = false;
+                        break;
+                    }
+                }
+                if (routeIsValid)
+                {
+                    threadValidRoutes.insert(route);
                 }
             }
-            if (routeIsValid)
-            {
-                validRoutes.insert(route);
-            }
+#pragma omp critical
+            validRoutes.insert(threadValidRoutes.begin(), threadValidRoutes.end());
         }
 
         return validRoutes;
@@ -235,7 +279,6 @@ int main(int argc, char *argv[])
         }
 
         VRPSolver solver(argv[1]);
-
         if (argc > 2)
         {
             solver.vehicleCapacity = std::stoi(argv[2]);

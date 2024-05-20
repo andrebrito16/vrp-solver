@@ -38,14 +38,14 @@ class VRPSolver
 private:
     std::vector<City> cities;
     std::vector<Road> roads;
-    int vehicleCapacity;
-    int maxCitiesPerRoute;
     std::vector<Route> routes;
     std::vector<std::tuple<std::set<int>, int, int, int, std::vector<int>>> stack;
 
 public:
     int lowerCost = INT_MAX;
     std::vector<int> route;
+    int vehicleCapacity;
+    int maxCitiesPerRoute;
     int numberOfRoads;
     int numberOfCities;
     Route bestRoute;
@@ -278,7 +278,15 @@ int main(int argc, char *argv[])
         }
 
         VRPSolver solver(argv[1]);
-        solver.getUserInput();
+        if (argc > 2)
+        {
+            solver.vehicleCapacity = std::stoi(argv[2]);
+            solver.maxCitiesPerRoute = std::stoi(argv[3]);
+        }
+        else
+        {
+            solver.getUserInput();
+        }
 
         std::cout << "Starting solver for " << solver.numberOfCities - 1 << " cities and " << solver.numberOfRoads << " routes..." << std::endl;
         auto startTime = std::chrono::high_resolution_clock::now();
@@ -301,7 +309,6 @@ int main(int argc, char *argv[])
         std::cout << std::endl;
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
         std::cout << "Time taken: " << duration.count() << " milliseconds" << std::endl;
-        std::cout << "-------------------------------------------------------------\n";
     }
     catch (const std::exception &e)
     {

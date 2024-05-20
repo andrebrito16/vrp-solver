@@ -1,0 +1,30 @@
+Processing ../inputs/graph_3_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 273
+0 3 0 -> 0 1 2 0 
+Time taken: 20791ms
+-------------------------------------------------------------
+Processing ../inputs/graph_4_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 238
+0 3 4 0 -> 0 1 2 0 
+Time taken: 13542ms
+-------------------------------------------------------------
+Processing ../inputs/graph_5_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 491
+0 4 5 0 -> 0 1 3 0 -> 0 2 0 
+Time taken: 17792ms
+-------------------------------------------------------------
+Processing ../inputs/graph_6_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 381
+0 3 6 0 -> 0 5 0 -> 0 1 4 0 -> 0 2 0 
+Time taken: 21375ms
+-------------------------------------------------------------
+Processing ../inputs/graph_7_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 651
+0 1 5 7 0 -> 0 4 6 0 -> 0 3 0 -> 0 2 0 
+Time taken: 24459ms
+-------------------------------------------------------------
+Processing ../inputs/graph_8_nodes.txt with vehicle capacity 20 and max cities per route 3
+Lower cost: 508
+0 6 8 0 -> 0 3 4 5 0 -> 0 1 7 0 -> 0 2 0 
+Time taken: 25333ms
+-------------------------------------------------------------
