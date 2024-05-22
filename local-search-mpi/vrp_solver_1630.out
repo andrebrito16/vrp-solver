@@ -33,7 +33,7 @@ Process 29 cost: 472
 Process 30 cost: 472
 Process 31 cost: 472
 0 3 0 -> 0 3 0 -> 0 3 0 -> 0 3 0 
-Time taken: 16298ns
+Time taken: 16298 nanosseconds
 -------------------------------------------------------------
 Processing ../inputs/graph_4_nodes.txt with vehicle capacity 20 and max cities per route 3
 Lower cost: 300
@@ -70,7 +70,7 @@ Process 29 cost: 300
 Process 30 cost: 300
 Process 31 cost: 300
 0 4 3 0 -> 0 4 3 0 -> 0 4 3 0 -> 0 4 3 0 -> 0 4 3 0 
-Time taken: 34399ns
+Time taken: 34399 nanosseconds
 -------------------------------------------------------------
 Processing ../inputs/graph_5_nodes.txt with vehicle capacity 20 and max cities per route 3
 Lower cost: 480
@@ -107,7 +107,7 @@ Process 29 cost: 480
 Process 30 cost: 480
 Process 31 cost: 480
 0 5 4 0 -> 0 5 4 0 -> 0 5 4 0 -> 0 5 4 0 -> 0 5 4 0 -> 0 5 4 0 
-Time taken: 42967ns
+Time taken: 42967 nanosseconds
 -------------------------------------------------------------
 Processing ../inputs/graph_6_nodes.txt with vehicle capacity 20 and max cities per route 3
 Lower cost: 525
@@ -144,7 +144,7 @@ Process 29 cost: 525
 Process 30 cost: 525
 Process 31 cost: 525
 0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 -> 0 6 3 0 
-Time taken: 48860ns
+Time taken: 48860 nanosseconds
 -------------------------------------------------------------
 Processing ../inputs/graph_7_nodes.txt with vehicle capacity 20 and max cities per route 3
 Lower cost: 848
@@ -181,7 +181,7 @@ Process 29 cost: 848
 Process 30 cost: 848
 Process 31 cost: 848
 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 -> 0 7 5 1 0 
-Time taken: 114522ns
+Time taken: 114522 nanosseconds
 -------------------------------------------------------------
 Processing ../inputs/graph_8_nodes.txt with vehicle capacity 20 and max cities per route 3
 Lower cost: 783
@@ -218,5 +218,5 @@ Process 29 cost: 783
 Process 30 cost: 783
 Process 31 cost: 783
 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 -> 0 8 6 0 
-Time taken: 74623ns
+Time taken: 74623 nanosseconds
 -------------------------------------------------------------

@@ -56,6 +56,7 @@
     "vector": "cpp",
     "algorithm": "cpp",
     "climits": "cpp",
-    "charconv": "cpp"
+    "charconv": "cpp",
+    "chrono": "cpp"
   }
 }

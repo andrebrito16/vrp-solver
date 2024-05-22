@@ -119,7 +119,7 @@ public:
 
         std::set<Route> filteredRoutes = filterValidRoutes();
 
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < filteredRoutes.size(); ++i)
         {
             auto route = std::next(filteredRoutes.begin(), i);
@@ -216,7 +216,7 @@ public:
 #pragma omp parallel
         {
             std::set<Route> threadValidRoutes;
-#pragma omp for nowait
+#pragma omp for schedule(dynamic)
             for (size_t i = 0; i < routes.size(); ++i)
             {
                 const Route &route = routes[i];
@@ -270,11 +270,18 @@ public:
 
 int main(int argc, char *argv[])
 {
+    MPI_Init(&argc, &argv);
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
     try
     {
         if (argc < 2)
         {
             std::cerr << "Usage: " << argv[0] << " <input file>" << std::endl;
+            MPI_Finalize();
             return 1;
         }
 
@@ -286,35 +293,49 @@ int main(int argc, char *argv[])
         }
         else
         {
-            solver.getUserInput();
+            if (rank == 0)
+            {
+                solver.getUserInput();
+            }
+            MPI_Bcast(&solver.vehicleCapacity, 1, MPI_INT, 0, MPI_COMM_WORLD);
+            MPI_Bcast(&solver.maxCitiesPerRoute, 1, MPI_INT, 0, MPI_COMM_WORLD);
         }
 
-        std::cout << "Starting solver for " << solver.numberOfCities - 1 << " cities and " << solver.numberOfRoads << " routes..." << std::endl;
         auto startTime = std::chrono::high_resolution_clock::now();
         solver.solve();
         auto endTime = std::chrono::high_resolution_clock::now();
 
-        std::cout << "Lower cost: " << solver.lowerCost << std::endl;
+        int globalLowerCost;
+        MPI_Reduce(&solver.lowerCost, &globalLowerCost, 1, MPI_INT, MPI_MIN, 0, MPI_COMM_WORLD);
 
-        int lastCityIndex = solver.bestRoute.size() - 1;
-        int counter = 0;
-        for (const auto &city : solver.bestRoute)
+        if (rank == 0)
         {
-            std::cout << city;
-            if (counter < lastCityIndex)
+            std::cout << "Results for " << solver.numberOfCities - 1 << " cities and " << solver.numberOfRoads << " routes..." << std::endl;
+            std::cout << "Lower cost: " << globalLowerCost << std::endl;
+
+            int lastCityIndex = solver.bestRoute.size() - 1;
+            int counter = 0;
+            for (const auto &city : solver.bestRoute)
             {
-                std::cout << " -> ";
+                std::cout << city;
+                if (counter < lastCityIndex)
+                {
+                    std::cout << " -> ";
+                }
+                counter++;
             }
-            counter++;
+            std::cout << std::endl;
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+            std::cout << "Time taken: " << duration.count() << " milliseconds" << std::endl;
         }
-        std::cout << std::endl;
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-        std::cout << "Time taken: " << duration.count() << " milliseconds" << std::endl;
     }
     catch (const std::exception &e)
     {
         std::cerr << "Error: " << e.what() << std::endl;
+        MPI_Finalize();
         return 1;
     }
+
+    MPI_Finalize();
     return 0;
 }

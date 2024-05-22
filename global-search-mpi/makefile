@@ -1,5 +1,5 @@
 all:
-	mpic++ -std=c++17 main.cpp -o global_search_omp
+	mpic++ -std=c++17 -Wall -O3 main.cpp -o global_search_omp
 
 mac:
 	mpicxx -fopenmp -o global_search_mpi main.cpp

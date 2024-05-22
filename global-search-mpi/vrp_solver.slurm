@@ -20,7 +20,7 @@ for input_file in "$INPUT_DIR"/graph_*_nodes.txt; do
     
     echo "Processing $input_file with vehicle capacity $VEHICLE_CAPACITY and max cities per route $MAX_CITIES_PER_ROUTE"
 
-    mpirun -np $total_procs ./local_search_mpi "$input_file" "$VEHICLE_CAPACITY" "$MAX_CITIES_PER_ROUTE" -fopenmp
+    mpirun -np $total_procs ./global_search_mpi "$input_file" "$VEHICLE_CAPACITY" "$MAX_CITIES_PER_ROUTE"
     
     echo "-------------------------------------------------------------"
 done

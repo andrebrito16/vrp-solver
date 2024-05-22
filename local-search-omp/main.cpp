@@ -7,6 +7,8 @@
 #include <set>
 #include <map>
 #include <chrono>
+#include <omp.h>
+#include <climits>
 
 using Route = std::vector<int>;
 
@@ -94,19 +96,33 @@ public:
         visitedCities.insert(0);
         int totalCost = 0;
 
-        while (visitedCities.size() < cities.size())
+#pragma omp parallel
         {
-            Route route = findNextRoute(visitedCities, 0);
-            if (route.empty())
+            std::vector<Route> localBestRoutes;
+            int localTotalCost = 0;
+
+#pragma omp for schedule(dynamic)
+            for (int i = 0; i < cities.size() - 1; ++i)
             {
-                break;
+                std::set<int> localVisitedCities = visitedCities;
+                Route route = findNextRoute(localVisitedCities, 0);
+                if (route.empty())
+                {
+                    continue;
+                }
+                route.insert(route.begin(), 0);
+                route.push_back(0);
+                route = twoOpt(route);
+                int routeCost = calculateRouteCost(route);
+                localTotalCost += routeCost;
+                localBestRoutes.push_back(route);
             }
-            route.insert(route.begin(), 0);
-            route.push_back(0);
-            route = twoOpt(route);
-            int routeCost = calculateRouteCost(route);
-            totalCost += routeCost;
-            bestRoutes.push_back(route);
+
+#pragma omp critical
+            {
+                totalCost += localTotalCost;
+                bestRoutes.insert(bestRoutes.end(), localBestRoutes.begin(), localBestRoutes.end());
+            }
         }
 
         lowerCost = totalCost;
@@ -175,6 +191,8 @@ public:
         while (improvement)
         {
             improvement = false;
+
+#pragma omp parallel for schedule(dynamic)
             for (size_t i = 1; i < route.size() - 2; ++i)
             {
                 for (size_t j = i + 1; j < route.size() - 1; ++j)
@@ -183,9 +201,12 @@ public:
                     int candidateCost = calculateRouteCost(candidate);
                     if (candidateCost < bestCost)
                     {
-                        newRoute = candidate;
-                        bestCost = candidateCost;
-                        improvement = true;
+#pragma omp critical
+                        {
+                            newRoute = candidate;
+                            bestCost = candidateCost;
+                            improvement = true;
+                        }
                     }
                 }
             }
