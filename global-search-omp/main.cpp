@@ -6,11 +6,10 @@
 #include <exception>
 #include <set>
 #include <map>
-#include <climits>
-#include <omp.h>
 #include <chrono>
-
-// #define DEBUG2
+#include <tuple>
+#include <omp.h>
+#include <climits>
 
 using Route = std::vector<int>;
 
@@ -39,14 +38,16 @@ class VRPSolver
 private:
     std::vector<City> cities;
     std::vector<Road> roads;
-    int vehicleCapacity;
-    int maxCitiesPerRoute;
-    int numberOfCities;
     std::vector<Route> routes;
+    std::vector<std::tuple<std::set<int>, int, int, int, std::vector<int>>> stack;
 
 public:
     int lowerCost = INT_MAX;
     std::vector<int> route;
+    int vehicleCapacity;
+    int maxCitiesPerRoute;
+    int numberOfRoads;
+    int numberOfCities;
     Route bestRoute;
     VRPSolver(const std::string &filename)
     {
@@ -74,38 +75,28 @@ public:
         file >> numCities;
         cities.resize(numCities + 1);
 
-        std::cout << "Number of cities: " << numCities << std::endl;
-        numberOfCities = numCities + 1;
-
 #ifdef DEBUG
-        std::cout << "Warehouse " << cities[0].number << " with weight " << cities[0].package_weight << std::endl;
+        std::cout << "Number of cities: " << numCities << std::endl;
 #endif
+        numberOfCities = numCities + 1;
 
         for (int i = 1; i <= numCities; ++i)
         {
             file >> cities[i].number >> cities[i].package_weight;
-#ifdef DEBUG
-            std::cout << "City " << cities[i].number << " with weight " << cities[i].package_weight << std::endl;
-#endif
         }
 
         file >> numRoutes;
+#ifdef DEBUG
         std::cout << "Number of routes: " << numRoutes << std::endl;
+#endif
+        numberOfRoads = numRoutes;
 
         for (int i = 0; i < numRoutes; ++i)
         {
             int start, end, cost;
             file >> start >> end >> cost;
-
             roads.push_back(Road(cities[start], cities[end], cost));
         }
-
-#ifdef DEBUG
-        for (const auto &road : roads)
-        {
-            std::cout << "Road from " << road.start.number << " to " << road.destination.number << " with cost " << road.cost << std::endl;
-        }
-#endif
 
         file.close();
     }
@@ -115,88 +106,105 @@ public:
         std::set<int> citiesVisited;
         citiesVisited.insert(0);
         std::vector<int> route{0};
+        stack.emplace_back(citiesVisited, 0, 0, 0, route);
 
 #pragma omp parallel
         {
-#pragma omp single
+#pragma omp single nowait
             {
-
-                generateAllPossibleRoutes(citiesVisited, 0, 0, 0, route);
+                generateAllPossibleRoutesLoop();
             }
         }
 
         std::set<Route> filteredRoutes = filterValidRoutes();
 
-        for (const auto &route : filteredRoutes)
+#pragma omp parallel for
+        for (int i = 0; i < filteredRoutes.size(); ++i)
         {
-            int cost = calculateRouteCost(route);
+            auto route = std::next(filteredRoutes.begin(), i);
+            int cost = calculateRouteCost(*route);
 
-#ifdef DEBUG2
-            if (route[1] == 1)
+#pragma omp critical
             {
-                std::cout << "Route: ";
-                for (const auto &city : route)
+                if (cost < lowerCost)
                 {
-                    std::cout << city << " ";
+                    lowerCost = cost;
+                    bestRoute = *route;
                 }
-                std::cout << "Cost: " << cost << std::endl;
-            }
-#endif
-            if (cost < lowerCost)
-            {
-                lowerCost = cost;
-                bestRoute = route;
             }
         }
     }
 
-    void generateAllPossibleRoutes(std::set<int> &placesVisited, int numberOfPlacesVisited, int previousCity, int vehicleLoad, std::vector<int> &route)
+    void generateAllPossibleRoutesLoop()
     {
-        for (const auto &city : cities)
+        while (true)
         {
-            int currentCity = city.number;
-
-            if (currentCity == previousCity)
+            std::tuple<std::set<int>, int, int, int, std::vector<int>> current;
+#pragma omp critical
             {
-                continue;
+                if (stack.empty())
+                {
+                    current = std::tuple<std::set<int>, int, int, int, std::vector<int>>();
+                }
+                else
+                {
+                    current = stack.back();
+                    stack.pop_back();
+                }
             }
 
-            if (placesVisited.find(currentCity) != placesVisited.end() && currentCity != 0)
+            if (std::get<0>(current).empty())
             {
-                continue;
+                break;
             }
 
-            if (currentCity != 0)
+            auto [placesVisited, numberOfPlacesVisited, previousCity, vehicleLoad, route] = current;
+
+            for (const auto &city : cities)
             {
-                bool loadExceeded = vehicleLoad + city.package_weight > vehicleCapacity;
-                bool placesExceeded = (numberOfPlacesVisited + 1) > maxCitiesPerRoute;
-                if (loadExceeded || placesExceeded)
+                int currentCity = city.number;
+
+                if (currentCity == previousCity)
                 {
                     continue;
                 }
-            }
 
-            placesVisited.insert(currentCity);
-            route.push_back(currentCity);
+                if (placesVisited.find(currentCity) != placesVisited.end() && currentCity != 0)
+                {
+                    continue;
+                }
 
-            if (currentCity == 0)
-            {
-                if (placesVisited.size() == numberOfCities)
+                if (currentCity != 0)
+                {
+                    bool loadExceeded = vehicleLoad + city.package_weight > vehicleCapacity;
+                    bool placesExceeded = (numberOfPlacesVisited + 1) > maxCitiesPerRoute;
+                    if (loadExceeded || placesExceeded)
+                    {
+                        continue;
+                    }
+                }
+
+                auto newPlacesVisited = placesVisited;
+                newPlacesVisited.insert(currentCity);
+                auto newRoute = route;
+                newRoute.push_back(currentCity);
+
+                if (currentCity == 0)
+                {
+                    if (newPlacesVisited.size() == numberOfCities)
+                    {
+#pragma omp critical
+                        routes.push_back(newRoute);
+                    }
+#pragma omp critical
+                    stack.emplace_back(newPlacesVisited, 0, currentCity, 0, newRoute);
+                }
+                else
                 {
 #pragma omp critical
-                    routes.push_back(route);
-                    return;
+                    stack.emplace_back(newPlacesVisited, numberOfPlacesVisited + 1, currentCity, vehicleLoad + city.package_weight, newRoute);
                 }
-#pragma omp task
-                generateAllPossibleRoutes(placesVisited, 0, currentCity, 0, route);
             }
-            else
-            {
-#pragma omp task
-                generateAllPossibleRoutes(placesVisited, numberOfPlacesVisited + 1, currentCity, vehicleLoad + city.package_weight, route);
-            }
-            route.pop_back();
-            placesVisited.erase(currentCity);
         }
     }
 
@@ -204,26 +212,34 @@ public:
     {
         std::set<Route> validRoutes;
 
-        for (const Route &route : routes)
+#pragma omp parallel
         {
-            bool routeIsValid = true;
-            for (size_t i = 0; i < route.size() - 1; ++i)
+            std::set<Route> threadValidRoutes;
+#pragma omp for nowait
+            for (size_t i = 0; i < routes.size(); ++i)
             {
-                int source = route[i];
-                int destination = route[i + 1];
-                bool found = std::any_of(roads.begin(), roads.end(), [source, destination](const Road &road)
-                                         { return road.start.number == source && road.destination.number == destination; });
-
-                if (!found)
+                const Route &route = routes[i];
+                bool routeIsValid = true;
+                for (size_t j = 0; j < route.size() - 1; ++j)
                 {
-                    routeIsValid = false;
-                    break;
+                    int source = route[j];
+                    int destination = route[j + 1];
+                    bool found = std::any_of(roads.begin(), roads.end(), [source, destination](const Road &road)
+                                             { return road.start.number == source && road.destination.number == destination; });
+
+                    if (!found)
+                    {
+                        routeIsValid = false;
+                        break;
+                    }
+                }
+                if (routeIsValid)
+                {
+                    threadValidRoutes.insert(route);
                 }
             }
-            if (routeIsValid)
-            {
-                validRoutes.insert(route);
-            }
+#pragma omp critical
+            validRoutes.insert(threadValidRoutes.begin(), threadValidRoutes.end());
         }
 
         return validRoutes;
@@ -250,6 +266,7 @@ public:
         return cost;
     }
 };
+
 int main(int argc, char *argv[])
 {
     try
@@ -261,23 +278,37 @@ int main(int argc, char *argv[])
         }
 
         VRPSolver solver(argv[1]);
-        solver.getUserInput();
+        if (argc > 2)
+        {
+            solver.vehicleCapacity = std::stoi(argv[2]);
+            solver.maxCitiesPerRoute = std::stoi(argv[3]);
+        }
+        else
+        {
+            solver.getUserInput();
+        }
 
-        std::cout << "Solver created successfully." << std::endl;
-
+        std::cout << "Starting solver for " << solver.numberOfCities - 1 << " cities and " << solver.numberOfRoads << " routes..." << std::endl;
         auto startTime = std::chrono::high_resolution_clock::now();
         solver.solve();
         auto endTime = std::chrono::high_resolution_clock::now();
+
         std::cout << "Lower cost: " << solver.lowerCost << std::endl;
 
+        int lastCityIndex = solver.bestRoute.size() - 1;
+        int counter = 0;
         for (const auto &city : solver.bestRoute)
         {
-            std::cout << city << " ";
+            std::cout << city;
+            if (counter < lastCityIndex)
+            {
+                std::cout << " -> ";
+            }
+            counter++;
         }
         std::cout << std::endl;
-
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-        std::cout << "Execution time: " << duration << " ms" << std::endl;
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        std::cout << "Time taken: " << duration.count() << " milliseconds" << std::endl;
     }
     catch (const std::exception &e)
     {
